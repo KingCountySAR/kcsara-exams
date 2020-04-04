@@ -1,0 +1,10 @@
+obj/
+.vs/
+bin/
+*.user
+
+PublishProfiles/
+node_modules/
+
+.leu
+appsettings.local.json
