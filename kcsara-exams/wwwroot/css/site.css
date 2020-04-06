@@ -1,5 +1,10 @@
-﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+﻿div.question {
+  margin-top:1rem;
+}
+div.question>div.text {
+  font-weight: bold;
+  margin-bottom: .6em;
+}
 
 a.navbar-brand {
   white-space: normal;
@@ -10,6 +15,19 @@ a.navbar-brand {
 /* Provide sufficient contrast against white background */
 a {
   color: #0366d6;
+}
+
+main a, main a:visited {
+  color: #4b610b;
+  text-decoration: underline
+}
+
+  main a:hover, main a:active {
+    color: #759311
+  }  
+
+main li {
+  line-height: 1.8rem;
 }
 
 .btn-primary {

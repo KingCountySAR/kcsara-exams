@@ -1,0 +1,51 @@
+﻿@model TestResultsModel
+@{
+  ViewData["Title"] = Model.Title;
+}
+<div>
+  @if (Model.Passed)
+  {
+    <h2>YOU PASSED!</h2>
+    <p>Thank you for participating with our online testing program. An email has been sent to you with the results of this exam. Please
+    follow the link below to download your printable certificate.</p>
+    <p>Download your <a href="/print/@Model.Id">printable certificate</a>.</p>
+  }
+  else
+  {
+    <h2>You did not pass</h2>
+    <p>Thank you for participating with our online testing program. You did not pass, but you may retake this test as many times as you wish.
+    Contact your agency's Training Director, an instructor in this subject, or look for additional information on our website. Once you feel
+    you're ready, please return and try again.</p>
+    <p><a href="/exams/@(Model.QuizId)">Change your answers and try again</a></p>
+  }
+  <p>
+    <div><label asp-for="@Model.Name"></label>: @Model.Name</div>
+    <div><label asp-for="@Model.Email"></label>: @Model.Email</div>
+  </p>
+  <p>
+    <div><label asp-for="@Model.Title"></label>: @Model.Title</div>
+    <div><label>Results</label>: @Model.Score out of @Model.Possible, @(Model.Percentage.ToString("0.0"))%</div>
+    <div><label>Completed</label>: <span id="completedTime"></span></div>
+    <div><label>Duration</label>: @Model.Duration.ToString(@"hh\:mm\:ss")</div>
+    <div><label>Submission ID</label>: @Model.Id</div>
+  </p>
+
+  @if(!Model.Passed)
+  {
+    <label>Questions you answered incorrectly:</label>
+    <ul>
+      @foreach (var question in Model.Incorrect) {
+        <li>@question</li>
+      }
+    </ul>
+  }
+</div>
+
+@section Scripts
+{
+<script type="text/javascript">
+  $(document).ready(function () {
+    $('#completedTime').text(new Date('@Model.Completed').toLocaleString())
+  })
+</script>
+}

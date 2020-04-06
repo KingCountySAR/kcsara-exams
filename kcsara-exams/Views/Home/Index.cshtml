@@ -1,8 +1,26 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<QuizListModel>
+@{
+  ViewData["Title"] = "List";
 }
-
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div>
+  <h2>Available Exams</h2>
+  <p>
+    Select an exam from the list below. There is no time limit to take the exam, nor maximum attempts. When you do pass,
+    you'll be provided a link to a certificate you may open and print out. If you provide an email address, you'll receive
+    a notice of your successfull attempt. Your success will also be reported to the agency you select.
+  </p>
+  <ul>
+    @foreach (var item in Model)
+    {
+    <li>
+      @if (item.Enabled)
+      {
+        <a href="/exams/@item.Id">@item.Title</a>
+      } else
+      {
+        @item.Title
+      }
+    </li>
+    }
+  </ul>
 </div>

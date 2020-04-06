@@ -1,0 +1,63 @@
+﻿@model PresentExamModel
+@{
+  ViewData["Title"] = Model.Quiz.Title;
+}
+<div>
+  <h2>@Model.Quiz.Title</h2>
+  <h5>@Model.Quiz.Description</h5>
+
+  @{
+    var r = new Random();
+  }
+
+  <form method="post">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label asp-for="@Model.Name"></label>
+        <input asp-for="@Model.Name" class="form-control" readonly="@(!string.IsNullOrWhiteSpace(Model.MemberId))" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label asp-for="@Model.Email"></label>
+        <input asp-for="@Model.Email" class="form-control" readonly="@(!string.IsNullOrWhiteSpace(Model.MemberId))" />
+        <small id="emailHelp" class="form-text text-muted">We will email you a certificate of completion.</small>
+      </div>
+    </div>
+    @if(string.IsNullOrWhiteSpace(Model.MemberId))
+    {
+      <div class="alert alert-warning" role="alert">
+        You are not signed in, so your database records will not be automatically updated.
+      </div>
+    }
+    <input asp-for="@Model.Id" />
+    <input asp-for="@Model.MemberId" />
+    <input asp-for="@Model.Started" />
+    @{ 
+      IEnumerable<Question> questions = Model.Quiz.Questions;
+      if (Model.Quiz.Randomize) questions = questions.OrderBy(f => r.Next());
+    }
+    @foreach (var question in questions)
+    {
+      <div class="question form-group">
+        <div class="text">@question.Text</div>
+        @{ 
+          IEnumerable<Answer> answers = question.Answers;
+          if (question.Randomize) answers = answers.OrderBy(f => r.Next());
+        }
+        @foreach (var answer in answers)
+        {
+          <div class="form-check answer">
+            <input type="checkbox" class="form-check-input" name="@(question.Id)[]" value="@(answer.Id)" id="@(answer.Id)">
+            <label class="form-check-label" for="@(answer.Id)">@answer.Text</label>
+          </div>
+        }
+      </div>
+    }
+    <div class="form-group">
+      <label for="notes">Notes</label>
+      <textarea class="form-control" id="notes" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Finish</button>
+  </form>
+</div>

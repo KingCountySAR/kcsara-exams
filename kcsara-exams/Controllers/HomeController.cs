@@ -5,9 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using kcsara_exams.Models;
+using Kcsara.Exams.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Kcsara.Exams.Data;
 
-namespace kcsara_exams.Controllers
+namespace Kcsara.Exams.Controllers
 {
   public class HomeController : Controller
   {
@@ -18,11 +23,22 @@ namespace kcsara_exams.Controllers
       _logger = logger;
     }
 
-    public IActionResult Index()
+    [HttpGet("/")]
+    [HttpGet("/exams")]
+    public IActionResult Index([FromServices] QuizStore store)
     {
-      return View();
+      return View(store.Quizzes
+        .OrderBy(f => f.Title)
+        .Where(f => f.Visible)
+        .Select(f => new QuizListModel
+        {
+          Id = f.Id,
+          Title = f.Title,
+          Enabled = f.Enabled
+        }));
     }
 
+    [Authorize]
     public IActionResult Privacy()
     {
       return View();
@@ -32,6 +48,21 @@ namespace kcsara_exams.Controllers
     public IActionResult Error()
     {
       return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    [HttpGet("signin")]
+    public IActionResult Signin(string returnUrl)
+    {
+      return Challenge(new AuthenticationProperties {
+        RedirectUri = returnUrl ?? "/"
+      });
+    }
+
+    [Authorize]
+    [HttpGet("signout")]
+    public IActionResult Signout()
+    {
+      return SignOut(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
     }
   }
 }

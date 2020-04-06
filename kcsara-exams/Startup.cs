@@ -1,23 +1,27 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
+using Kcsara.Exams.Certificates;
+using Kcsara.Exams.Data;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SarData.Server.Apis;
 
-namespace kcsara_exams
+namespace Kcsara.Exams
 {
   public class Startup
   {
-    public Startup(IConfiguration configuration)
+    private readonly IWebHostEnvironment env;
+
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
       Configuration = configuration;
+      this.env = env;
     }
 
     public IConfiguration Configuration { get; }
@@ -25,10 +29,33 @@ namespace kcsara_exams
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
-          .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
+      JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+      services.AddAuthentication(options => {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+      })
+      .AddCookie()
+      .AddOpenIdConnect(options =>
+      {
+        options.Authority = Configuration["auth:authority"];
+        options.RequireHttpsMetadata = !env.IsDevelopment();
+        options.ClientId = Configuration["auth:frontend:client_id"];
+        options.ClientSecret = Configuration["auth:frontend:client_secret"];
+        foreach (var scope in Configuration["auth:frontend:scope"]?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0])
+        {
+          options.Scope.Add(scope);
+        }
+        options.ResponseType = "code";
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.ClaimActions.MapUniqueJsonKey("memberId", "memberId");
+        options.SaveTokens = true;
+      });
       services.AddControllersWithViews();
       services.AddRazorPages();
+
+      services.AddTableStorage(Configuration);
+      services.AddSingleton<CertificateStore>();
+      services.AddSingleton(QuizStore.init(Configuration["local_files"]));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

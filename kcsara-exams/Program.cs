@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace kcsara_exams
+using SarData.Logging;
+
+namespace Kcsara.Exams
 {
   public class Program
   {
@@ -17,10 +14,18 @@ namespace kcsara_exams
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(webBuilder =>
-            {
-              webBuilder.UseStartup<Startup>();
-            });
+    Host.CreateDefaultBuilder(args)
+      .ConfigureLogging((context, logBuilder) =>
+      {
+        logBuilder.AddSarDataLogging(context.Configuration["local_files"] ?? context.HostingEnvironment.ContentRootPath, "exams");
+      })
+      .ConfigureAppConfiguration((context, config) =>
+      {
+        config.AddConfigFiles(context.HostingEnvironment.EnvironmentName);
+      })
+      .ConfigureWebHostDefaults(webBuilder =>
+      {
+        webBuilder.UseStartup<Startup>();
+      });
   }
 }

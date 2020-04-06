@@ -1,6 +1,6 @@
 using System;
 
-namespace kcsara_exams.Models
+namespace Kcsara.Exams.Models
 {
   public class ErrorViewModel
   {
