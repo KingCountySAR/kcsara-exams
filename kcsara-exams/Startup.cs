@@ -10,7 +10,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SarData.Common.Apis;
+using SarData.Common.Apis.Database;
+using SarData.Server;
 using SarData.Server.Apis;
+using SarData.Server.Apis.Health;
 
 namespace Kcsara.Exams
 {
@@ -53,6 +57,12 @@ namespace Kcsara.Exams
       services.AddControllersWithViews();
       services.AddRazorPages();
 
+      services.AddSingleton<ITokenClient, DefaultTokenClient>();
+
+      var healthChecksBuilder = services.AddHealthChecks();
+      services.AddMessagingApi(Configuration, healthChecksBuilder);
+      services.ConfigureApi<IDatabaseApi>("database", Configuration);
+
       services.AddTableStorage(Configuration);
       services.AddSingleton<CertificateStore>();
       services.AddSingleton(QuizStore.init(Configuration["local_files"]));
@@ -61,6 +71,8 @@ namespace Kcsara.Exams
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+      app.UseSarHealthChecks<Startup>();
+
       if (env.IsDevelopment())
       {
         app.UseDeveloperExceptionPage();

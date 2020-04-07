@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Kcsara.Exams.Certificates;
 using Kcsara.Exams.Data;
 using Kcsara.Exams.Models;
@@ -9,6 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using SarData.Common.Apis.Database;
+using SarData.Common.Apis.Database.Training;
+using SarData.Common.Apis.Messaging;
 
 namespace Kcsara.Exams.Controllers
 {
@@ -59,7 +63,7 @@ namespace Kcsara.Exams.Controllers
     /// <param name="configuration"></param>
     /// <returns></returns>
     [HttpPost("/exams/{quizId}")]
-    public IActionResult Finish(string quizId, [FromServices] IConfiguration configuration)
+    public async Task<IActionResult> Finish(string quizId, [FromServices] IConfiguration configuration, [FromServices] IMessagingApi messaging, [FromServices] IDatabaseApi database)
     {
       var quiz = store.Quizzes.FirstOrDefault(f => f.Id.Equals(quizId, StringComparison.OrdinalIgnoreCase) || f.Title.Replace(" ", "-").Equals(quizId, StringComparison.OrdinalIgnoreCase));
       if (quiz == null)
@@ -106,8 +110,8 @@ namespace Kcsara.Exams.Controllers
       var model = new TestResultsModel
       {
         Id = new Guid(Request.Form["Id"].Single()),
-        Name = User.FindFirst("name")?.Value,
-        Email = User.FindFirst("email")?.Value,
+        Name = User.FindFirst("name")?.Value ?? Request.Form["Name"],
+        Email = User.FindFirst("email")?.Value ?? Request.Form["Email"],
         MemberId = User.FindFirst("memberId")?.Value,
 
         Title = quiz.Title,
@@ -126,13 +130,31 @@ namespace Kcsara.Exams.Controllers
 
       model.Duration = model.Completed - DateTimeOffset.Parse(Request.Form["Started"].Single());
 
-      var cert = certificateStore.AddCertificate(new CertificateEntity
+      var cert = await certificateStore.AddCertificate(new CertificateEntity
       {
         RowKey = model.Id.ToString().ToLowerInvariant(),
         Completed = model.Completed,
         Name = model.Name,
         Title = model.Title
       });
+
+      // Send email to user
+      string message = $"Full Name: {model.Name}<br/>Email: {model.Email}<br/><br/>Course: {model.Title}<br/>Results: {model.Score} out of {model.Possible}.<br/><br/>A certificate of completion is attached.<br/><br/><br/>--<br/>KCSARA Training Committee<br/>training@kcsara.org";
+      await messaging.SendEmail(model.Email, "KCSARA Online Exam Results", message, new List<MessageAttachment>
+      {
+        new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
+      });
+
+      if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
+      {
+        var record = await database.CreateTrainingRecord(new TrainingRecord
+        {
+          Completed = model.Completed,
+          Course = new NameIdPair { Id = courseId },
+          Member = new NameIdPair { Id = memberId },
+          Comments = $"{configuration["siteRoot"]?.TrimEnd('/') ?? "https://exams.kcsara.org"}/certificate/{model.Id}"
+        });
+      }
 
       return View(model);
     }

@@ -27,7 +27,7 @@
     @if(string.IsNullOrWhiteSpace(Model.MemberId))
     {
       <div class="alert alert-warning" role="alert">
-        You are not signed in, so your database records will not be automatically updated.
+        You are not signed in. You will receive your results by email, but your database records will not be automatically updated.
       </div>
     }
     <input asp-for="@Model.Id" />

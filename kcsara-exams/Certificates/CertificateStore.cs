@@ -35,32 +35,34 @@ namespace Kcsara.Exams.Certificates
       this.url = config["siteRoot"] ?? "https://exams.kcsara.org";
     }
 
-    internal async Task<RenderedPdf> GetCertificate(string id)
+    internal async Task<MimeFile> GetCertificate(string id)
     {
-      var existing = cache.Get<RenderedPdf>(id);
+      var existing = cache.Get<MimeFile>(id);
       if (existing == null)
       {
         var data = await tableStore.GetRow<CertificateEntity>(TABLE_NAME, id);
         if (data != null)
         {
-          existing = await RenderCertificate(data);
+          existing = RenderCertificate(data);
           cache.Set(data.RowKey, existing, TimeSpan.FromMinutes(30));
         }
       }
       return existing;
     }
 
-    public async Task AddCertificate(CertificateEntity data)
+    public async Task<MimeFile> AddCertificate(CertificateEntity data)
     {
-      var existing = cache.Get<RenderedPdf>(data.RowKey);
+      var existing = cache.Get<MimeFile>(data.RowKey);
       if (existing != null) throw new DuplicateTableRowException();
 
       logger.LogInformation("Storing certificate " + data.RowKey);
       await tableStore.InsertRow(TABLE_NAME, data);
-      return;
+
+      var pdf = RenderCertificate(data);
+      return pdf;
     }
 
-    private Task<RenderedPdf> RenderCertificate(CertificateEntity entity)
+    private MimeFile RenderCertificate(CertificateEntity entity)
     {
       using MemoryStream ms = new MemoryStream();
       PdfDocument pdfDoc = new PdfDocument(new PdfWriter(ms));
@@ -109,11 +111,12 @@ namespace Kcsara.Exams.Certificates
 
       doc.Close();
 
-      return Task.FromResult(new RenderedPdf
+      return new MimeFile
       {
         Data = ms.ToArray(),
-        FileName = entity.Title.ToLowerInvariant().Replace(" ", "-") + ".pdf"
-      });
+        FileName = entity.Title.ToLowerInvariant().Replace(" ", "-") + ".pdf",
+        MimeType = "application/pdf"
+      };
     }
 
     private string GetOrdinal(int number)

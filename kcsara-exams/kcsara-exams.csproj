@@ -21,7 +21,13 @@
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.6" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="build_info.json" />
+  </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="build_info.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\common\api-clients\api-clients.csproj" />

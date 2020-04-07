@@ -1,0 +1,50 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- checkout: self
+  path: s/kcsara-exams
+  submodules: true
+
+- script: dir $(Build.SourcesDirectory)
+
+- powershell: '"{`"exams`":`"$(git --git-dir kcsara-exams/.git rev-parse HEAD)`", `"common`":`"$(git --git-dir kcsara-exams/common/.git rev-parse HEAD)`"}" > kcsara-exams/kcsara-exams/build_info.json'
+  displayName: "Emit build number"
+  workingDirectory: '$(Build.SourcesDirectory)'
+  failOnStderr: true
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    command: build
+    projects: '**/*.csproj'
+    arguments: '--configuration Release' # Update this to match your need
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: publish
+    publishWebProjects: True
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: True
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: '$(deploy_subscription)'
+    appType: 'webApp'
+    WebAppName: '$(deploy_app)'
+    deployToSlotOrASE: true
+    ResourceGroupName: '$(deploy_rg)'
+    SlotName: '$(deploy_slot)'
+    packageForLinux: '$(build.artifactStagingDirectory)/kcsara-exams.zip'
