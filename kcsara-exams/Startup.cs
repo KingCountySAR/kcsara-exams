@@ -1,5 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq;
 using Kcsara.Exams.Certificates;
 using Kcsara.Exams.Data;
 using Microsoft.AspNetCore.Authentication;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -112,6 +115,15 @@ namespace Kcsara.Exams
                   name: "default",
                   pattern: "{controller=Home}/{action=Index}/{id?}");
         endpoints.MapRazorPages();
+        endpoints.MapGet("/.well-known/acme-challenge/{name}", async context =>
+        {
+          string folder = Path.GetFullPath(Path.Combine(Configuration["local_files"] ?? ".", "letsencrypt", ".well-known", "acme-challenge"));
+          string name = Path.GetFullPath(Path.Combine(folder, context.Request.RouteValues["name"].ToString()));
+          // Don't trust the user supplied file not to jump out of the directory. Make sure it exists in the acme-challenge directory.
+          string requestedPath = Directory.GetFiles(folder).FirstOrDefault(f => f.Equals(name));
+          context.Response.StatusCode = requestedPath == null ? 404 : 200;
+          await context.Response.WriteAsync(requestedPath == null ? "Not here" : await File.ReadAllTextAsync(requestedPath));
+        });
       });
     }
   }
