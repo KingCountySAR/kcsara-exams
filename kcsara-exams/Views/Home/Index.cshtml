@@ -2,25 +2,72 @@
 @{
   ViewData["Title"] = "List";
 }
-<div>
-  <h2>Available Exams</h2>
-  <p>
-    Select an exam from the list below. There is no time limit to take the exam, nor maximum attempts. When you do pass,
-    you'll be provided a link to a certificate you may open and print out. If you provide an email address, you'll receive
-    a notice of your successfull attempt. Your success will also be reported to the agency you select.
-  </p>
-  <ul>
-    @foreach (var item in Model)
-    {
-    <li>
-      @if (item.Enabled)
+  <div>
+    <h2>Available Exams</h2>
+    <p>
+      Select an exam from the list below. There is no time limit to take the exam, nor maximum attempts. When you do pass,
+      you'll be provided a link to a certificate you may open and print out. If you provide an email address, you'll receive
+      a notice of your successfull attempt. Your success will also be reported to the agency you select.
+    </p>
+    <ul>
+      @foreach (var item in Model)
       {
-        <a href="/exams/@item.Id">@item.Title</a>
-      } else
-      {
-        @item.Title
+        <li>
+          @if (item.Enabled)
+          {
+          <div class="d-flex align-items-center" id="course-@item.RecordsId.ToString().ToLowerInvariant()"><a href="/exams/@item.Id">@item.Title</a></div>
+          }
+          else
+          {
+            @item.Title
+          }
+        </li>
       }
-    </li>
+    </ul>
+    <div id="loading-text" class="d-none justify-content-left">
+      <div class="spinner-border" role="status" style="height:1.5em; width:1.5em">
+        <span class="sr-only">Loading...</span>
+      </div>
+      <div class="ml-2">Loading your training records ...</div>
+    </div>
+  </div>
+
+@section Scripts
+{
+  <script type="text/javascript">
+    var memberId = '@User.FindFirst("memberId")?.Value';
+    if (memberId) {
+      $('#loading-text').addClass('d-flex').removeClass('d-none');
+      $(document).ready(function () {
+        $.getJSON("/current-records")
+          .then(function (d) {
+            for (var i = 0; i < d.length; i++) {
+              var c = d[i]
+              var div = $('#course-' + c.course.id.toLowerCase());
+              if (div) {
+                var expiration = c.expires && new Date(c.expires);
+                var icon = 'error';
+                var color = 'text-danger'
+                var message = 'Not Completed'
+
+                if (c.status == 'Expired') {
+                  message = 'Expired ' + expiration.toLocaleDateString()
+                } else if (c.status == 'NotExpired' && (expiration.getTime() - new Date().getTime() < 2 * 30 * 24 * 60 * 60 * 1000)) {
+                  message = 'Expiring ' + expiration.toLocaleDateString()
+                  color = 'text-warning'
+                } else if (c.status == 'NotExpired') {
+                  message = 'Expires ' + expiration.toLocaleDateString()
+                  color = 'text-success'
+                  icon = 'check_circle'
+                }
+
+                div.append($('<i class="material-icons" style="font-size:1em; margin-left:1em">' + icon + '</i>').addClass(color))
+                   .append($('<small style="margin-left:.3em">' + message + '</small>').addClass(color))
+              }
+            }
+          })
+          .always(function () { $('#loading-text').addClass('d-none').removeClass('d-flex'); })
+      });
     }
-  </ul>
-</div>
+  </script>
+}

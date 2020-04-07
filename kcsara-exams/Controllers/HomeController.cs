@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Kcsara.Exams.Data;
+using SarData.Common.Apis.Database;
 
 namespace Kcsara.Exams.Controllers
 {
@@ -34,8 +35,29 @@ namespace Kcsara.Exams.Controllers
         {
           Id = f.Id,
           Title = f.Title,
-          Enabled = f.Enabled
+          Enabled = f.Enabled,
+          RecordsId = f.RecordsId
         }));
+    }
+
+    [HttpGet("/current-records")]
+    [Authorize]
+    public async Task<IActionResult> CurrentRecords([FromServices] IDatabaseApi database, [FromServices] QuizStore quizStore)
+    {
+      var memberStr = User.FindFirst("memberId").Value;
+      if (!Guid.TryParse(memberStr, out Guid memberId))
+      {
+        return Forbid();
+      }
+      
+      var records = await database.ListMemberRequiredTraining(memberId);
+      var interesting = records.GroupJoin(
+        quizStore.Quizzes,
+        f => f.Course.Id,
+        g => string.IsNullOrWhiteSpace(g.RecordsId) ? Guid.Empty : new Guid(g.RecordsId),
+        (l, r) => l);
+
+      return Json(interesting);
     }
 
     [Authorize]

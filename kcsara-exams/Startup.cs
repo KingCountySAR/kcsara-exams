@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SarData;
 using SarData.Common.Apis;
 using SarData.Common.Apis.Database;
 using SarData.Server;
@@ -59,7 +60,7 @@ namespace Kcsara.Exams
           options.SaveTokens = true;
         });
         services.AddControllersWithViews();
-        services.AddRazorPages();
+        services.AddRazorPages().AddJsonOptions(options => options.JsonSerializerOptions.Setup());
 
         services.AddSingleton<ITokenClient, DefaultTokenClient>();
 
@@ -75,7 +76,6 @@ namespace Kcsara.Exams
           Log.Logger.Error("exams.json not found. No quizzes will be available");
         }
         services.AddSingleton(quizStore);
-        Log.Logger.Information("Finished with Startup:ConfigureServices");
       }
       catch (Exception e)
       {
@@ -86,9 +86,6 @@ namespace Kcsara.Exams
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-      Log.Logger.Information("Starting Startup:Configure");
-
-      Log.Logger.Information("Using Health Checks ...");
       app.UseSarHealthChecks<Startup>();
 
       if (env.IsDevelopment())
@@ -104,7 +101,6 @@ namespace Kcsara.Exams
       app.UseHttpsRedirection();
       app.UseStaticFiles();
 
-      Log.Logger.Information("Using Routing ...");
       app.UseRouting();
 
       app.UseAuthentication();
@@ -117,7 +113,6 @@ namespace Kcsara.Exams
                   pattern: "{controller=Home}/{action=Index}/{id?}");
         endpoints.MapRazorPages();
       });
-      Log.Logger.Information("Finished Startup:Configure");
     }
   }
 }

@@ -10,5 +10,7 @@ namespace Kcsara.Exams.Models
     public string Id { get; set; }
     public string Title { get; set; }
     public bool Enabled { get; set; }
+
+    public string RecordsId { get; set; }
   }
 }
