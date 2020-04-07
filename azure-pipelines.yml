@@ -19,7 +19,7 @@ steps:
 
 - script: dir $(Build.SourcesDirectory)
 
-- powershell: '"{`"exams`":`"$(git --git-dir kcsara-exams/.git rev-parse HEAD)`", `"common`":`"$(git --git-dir kcsara-exams/common/.git rev-parse HEAD)`"}" > kcsara-exams/kcsara-exams/build_info.json'
+- powershell: '"{`"exams`":`"$(git --git-dir .git rev-parse HEAD)`", `"common`":`"$(git --git-dir common/.git rev-parse HEAD)`"}" > kcsara-exams/build_info.json'
   displayName: "Emit build number"
   workingDirectory: '$(Build.SourcesDirectory)'
   failOnStderr: true
