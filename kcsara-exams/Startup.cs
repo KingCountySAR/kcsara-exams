@@ -15,6 +15,7 @@ using SarData.Common.Apis.Database;
 using SarData.Server;
 using SarData.Server.Apis;
 using SarData.Server.Apis.Health;
+using Serilog;
 
 namespace Kcsara.Exams
 {
@@ -33,44 +34,56 @@ namespace Kcsara.Exams
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-      JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-      services.AddAuthentication(options => {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-      })
-      .AddCookie()
-      .AddOpenIdConnect(options =>
+      try
       {
-        options.Authority = Configuration["auth:authority"];
-        options.RequireHttpsMetadata = !env.IsDevelopment();
-        options.ClientId = Configuration["auth:frontend:client_id"];
-        options.ClientSecret = Configuration["auth:frontend:client_secret"];
-        foreach (var scope in Configuration["auth:frontend:scope"]?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0])
+        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        services.AddAuthentication(options =>
         {
-          options.Scope.Add(scope);
-        }
-        options.ResponseType = "code";
-        options.GetClaimsFromUserInfoEndpoint = true;
-        options.ClaimActions.MapUniqueJsonKey("memberId", "memberId");
-        options.SaveTokens = true;
-      });
-      services.AddControllersWithViews();
-      services.AddRazorPages();
+          options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+          options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        })
+        .AddCookie()
+        .AddOpenIdConnect(options =>
+        {
+          options.Authority = Configuration["auth:authority"];
+          options.RequireHttpsMetadata = !env.IsDevelopment();
+          options.ClientId = Configuration["auth:frontend:client_id"];
+          options.ClientSecret = Configuration["auth:frontend:client_secret"];
+          foreach (var scope in Configuration["auth:frontend:scope"]?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0])
+          {
+            options.Scope.Add(scope);
+          }
+          options.ResponseType = "code";
+          options.GetClaimsFromUserInfoEndpoint = true;
+          options.ClaimActions.MapUniqueJsonKey("memberId", "memberId");
+          options.SaveTokens = true;
+        });
+        services.AddControllersWithViews();
+        services.AddRazorPages();
 
-      services.AddSingleton<ITokenClient, DefaultTokenClient>();
+        services.AddSingleton<ITokenClient, DefaultTokenClient>();
 
-      var healthChecksBuilder = services.AddHealthChecks();
-      services.AddMessagingApi(Configuration, healthChecksBuilder);
-      services.ConfigureApi<IDatabaseApi>("database", Configuration);
+        var healthChecksBuilder = services.AddHealthChecks();
+        services.AddMessagingApi(Configuration, healthChecksBuilder);
+        services.ConfigureApi<IDatabaseApi>("database", Configuration);
 
-      services.AddTableStorage(Configuration);
-      services.AddSingleton<CertificateStore>();
-      services.AddSingleton(QuizStore.init(Configuration["local_files"]));
+        services.AddTableStorage(Configuration);
+        services.AddSingleton<CertificateStore>();
+        services.AddSingleton(QuizStore.init(Configuration["local_files"]));
+        Log.Logger.Information("Finished with Startup:ConfigureServices");
+      }
+      catch (Exception e)
+      {
+        Log.Logger.Error(e, "Failed to setup app");
+      }
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+      Log.Logger.Information("Starting Startup:Configure");
+
+      Log.Logger.Information("Using Health Checks ...");
       app.UseSarHealthChecks<Startup>();
 
       if (env.IsDevelopment())
@@ -86,6 +99,7 @@ namespace Kcsara.Exams
       app.UseHttpsRedirection();
       app.UseStaticFiles();
 
+      Log.Logger.Information("Using Routing ...");
       app.UseRouting();
 
       app.UseAuthentication();
@@ -98,6 +112,7 @@ namespace Kcsara.Exams
                   pattern: "{controller=Home}/{action=Index}/{id?}");
         endpoints.MapRazorPages();
       });
+      Log.Logger.Information("Finished Startup:Configure");
     }
   }
 }
