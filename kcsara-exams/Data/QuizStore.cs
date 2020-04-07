@@ -16,8 +16,12 @@ namespace Kcsara.Exams.Data
     {
       QuizStore store = new QuizStore();
 
-      string json = File.ReadAllText(Path.Combine(localFiles ?? ".", "exams.json"));
-      store.Quizzes = JsonSerializer.Deserialize<List<Quiz>>(json, new JsonSerializerOptions().Setup());
+      string path = Path.Combine(localFiles ?? ".", "exams.json");
+      if (File.Exists(path))
+      {
+        string json = File.ReadAllText(path);
+        store.Quizzes = JsonSerializer.Deserialize<List<Quiz>>(json, new JsonSerializerOptions().Setup());
+      }
       return store;
     }
   }

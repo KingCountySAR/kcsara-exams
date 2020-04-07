@@ -69,7 +69,12 @@ namespace Kcsara.Exams
 
         services.AddTableStorage(Configuration);
         services.AddSingleton<CertificateStore>();
-        services.AddSingleton(QuizStore.init(Configuration["local_files"]));
+        var quizStore = QuizStore.init(Configuration["local_files"]);
+        if (quizStore.Quizzes.Count == 0)
+        {
+          Log.Logger.Error("exams.json not found. No quizzes will be available");
+        }
+        services.AddSingleton(quizStore);
         Log.Logger.Information("Finished with Startup:ConfigureServices");
       }
       catch (Exception e)
