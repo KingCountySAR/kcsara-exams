@@ -63,13 +63,18 @@ namespace Kcsara.Exams.Controllers
     /// <param name="configuration"></param>
     /// <returns></returns>
     [HttpPost("/exams/{quizId}")]
-    public async Task<IActionResult> Finish(string quizId, [FromServices] IConfiguration configuration, [FromServices] IMessagingApi messaging, [FromServices] IDatabaseApi database)
+    public async Task<IActionResult> Finish(string quizId, PresentExamModel formModel, [FromServices] IConfiguration configuration, [FromServices] IMessagingApi messaging, [FromServices] IDatabaseApi database)
     {
       var quiz = store.Quizzes.FirstOrDefault(f => f.Id.Equals(quizId, StringComparison.OrdinalIgnoreCase) || f.Title.Replace(" ", "-").Equals(quizId, StringComparison.OrdinalIgnoreCase));
       if (quiz == null)
       {
         logger.LogWarning("Can't find exam with id " + quizId);
         return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+      }
+      
+      if (!ModelState.IsValid)
+      {
+        return BadRequest(ModelState);
       }
 
       var numWrong = 0;
@@ -123,7 +128,7 @@ namespace Kcsara.Exams.Controllers
         Completed = DateTimeOffset.Now,
         Incorrect = incorrect
       };
-            
+
       var passing = configuration.GetValue<float?>("passing_score") ?? 0.8;
       model.Percentage = model.Score / (float)model.Possible * 100.0f;
       model.Passed = model.Percentage >= passing;

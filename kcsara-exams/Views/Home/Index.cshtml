@@ -2,35 +2,35 @@
 @{
   ViewData["Title"] = "List";
 }
-  <div>
-    <h2>Available Exams</h2>
-    <p>
-      Select an exam from the list below. There is no time limit to take the exam, nor maximum attempts. When you do pass,
-      you'll be provided a link to a certificate you may open and print out. If you provide an email address, you'll receive
-      a notice of your successfull attempt. Your success will also be reported to the agency you select.
-    </p>
-    <ul>
-      @foreach (var item in Model)
-      {
-        <li>
-          @if (item.Enabled)
-          {
-          <div class="d-flex align-items-center" id="course-@item.RecordsId.ToString().ToLowerInvariant()"><a href="/exams/@item.Id">@item.Title</a></div>
-          }
-          else
-          {
-            @item.Title
-          }
-        </li>
-      }
-    </ul>
-    <div id="loading-text" class="d-none justify-content-left">
-      <div class="spinner-border" role="status" style="height:1.5em; width:1.5em">
-        <span class="sr-only">Loading...</span>
-      </div>
-      <div class="ml-2">Loading your training records ...</div>
+<div>
+  <h2>Available Exams</h2>
+  <p>
+    Select an exam from the list below. There is no time limit to take the exam, nor maximum attempts. When you do pass,
+    you'll be provided a link to a certificate you may open and print out. If you provide an email address, you'll receive
+    a notice of your successfull attempt. Your success will also be reported to the agency you select.
+  </p>
+  <ul>
+    @foreach (var item in Model)
+    {
+      <li>
+        @if (item.Enabled)
+        {
+          <div class="d-flex flex-column flex-sm-row" id="course-@item.RecordsId.ToString().ToLowerInvariant()"><a href="/exams/@item.Id">@item.Title</a></div>
+        }
+        else
+        {
+          @item.Title
+        }
+      </li>
+    }
+  </ul>
+  <div id="loading-text" class="d-none justify-content-left">
+    <div class="spinner-border" role="status" style="height:1.5em; width:1.5em">
+      <span class="sr-only">Loading...</span>
     </div>
+    <div class="ml-2">Loading your training records ...</div>
   </div>
+</div>
 
 @section Scripts
 {
@@ -61,8 +61,11 @@
                   icon = 'check_circle'
                 }
 
-                div.append($('<i class="material-icons" style="font-size:1em; margin-left:1em">' + icon + '</i>').addClass(color))
-                   .append($('<small style="margin-left:.3em">' + message + '</small>').addClass(color))
+                div
+                  .append($('<div class="d-flex align-items-center"></div')
+                    .append($('<i class="material-icons" style="font-size:1em; margin-left:1em">' + icon + '</i>').addClass(color))
+                    .append($('<small style="margin-left:.3em">' + message + '</small>').addClass(color))
+                  )
               }
             }
           })

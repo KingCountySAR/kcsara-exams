@@ -11,9 +11,12 @@ namespace Kcsara.Exams.Models
     public Guid Id { get; set; }
 
     [Display(Name = "Full Name")]
+    [Required]
     public string Name { get; set; }
 
     [Display(Name = "Email")]
+    [EmailAddress]
+    [Required]
     public string Email { get; set; }
     
     [HiddenInput]
