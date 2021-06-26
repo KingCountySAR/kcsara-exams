@@ -129,36 +129,39 @@ namespace Kcsara.Exams.Controllers
         Incorrect = incorrect
       };
 
-      var passing = configuration.GetValue<float?>("passing_score") ?? 0.8;
+      var passing = configuration.GetValue<float?>("passing_score") ?? 80;
       model.Percentage = model.Score / (float)model.Possible * 100.0f;
       model.Passed = model.Percentage >= passing;
 
       model.Duration = model.Completed - DateTimeOffset.Parse(Request.Form["Started"].Single());
 
-      var cert = await certificateStore.AddCertificate(new CertificateEntity
+      if (model.Passed)
       {
-        RowKey = model.Id.ToString().ToLowerInvariant(),
-        Completed = model.Completed,
-        Name = model.Name,
-        Title = model.Title
-      });
-
-      // Send email to user
-      string message = $"Full Name: {model.Name}<br/>Email: {model.Email}<br/><br/>Course: {model.Title}<br/>Results: {model.Score} out of {model.Possible}.<br/><br/>A certificate of completion is attached.<br/><br/><br/>--<br/>KCSARA Training Committee<br/>training@kcsara.org";
-      await messaging.SendEmail(model.Email, "KCSARA Online Exam Results", message, new List<MessageAttachment>
-      {
-        new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
-      });
-
-      if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
-      {
-        var record = await database.CreateTrainingRecord(new TrainingRecord
+        var cert = await certificateStore.AddCertificate(new CertificateEntity
         {
+          RowKey = model.Id.ToString().ToLowerInvariant(),
           Completed = model.Completed,
-          Course = new NameIdPair { Id = courseId },
-          Member = new NameIdPair { Id = memberId },
-          Comments = $"{configuration["siteRoot"]?.TrimEnd('/') ?? "https://exams.kcsara.org"}/certificate/{model.Id}"
+          Name = model.Name,
+          Title = model.Title
         });
+
+        // Send email to user
+        string message = $"Full Name: {model.Name}<br/>Email: {model.Email}<br/><br/>Course: {model.Title}<br/>Results: {model.Score} out of {model.Possible}.<br/><br/>A certificate of completion is attached.<br/><br/><br/>--<br/>KCSARA Training Committee<br/>training@kcsara.org";
+        await messaging.SendEmail(model.Email, "KCSARA Online Exam Results", message, new List<MessageAttachment>
+        {
+          new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
+        });
+
+        if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
+        {
+          var record = await database.CreateTrainingRecord(new TrainingRecord
+          {
+            Completed = model.Completed,
+            Course = new NameIdPair { Id = courseId },
+            Member = new NameIdPair { Id = memberId },
+            Comments = $"{configuration["siteRoot"]?.TrimEnd('/') ?? "https://exams.kcsara.org"}/certificate/{model.Id}"
+          });
+        }
       }
 
       return View(model);
