@@ -152,16 +152,16 @@ namespace Kcsara.Exams.Controllers
           new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
         });
 
-        if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
-        {
-          var record = await database.CreateTrainingRecord(new TrainingRecord
-          {
-            Completed = model.Completed,
-            Course = new NameIdPair { Id = courseId },
-            Member = new NameIdPair { Id = memberId },
-            Comments = $"{configuration["siteRoot"]?.TrimEnd('/') ?? "https://exams.kcsara.org"}/certificate/{model.Id}"
-          });
-        }
+        //if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
+        //{
+        //  var record = await database.CreateTrainingRecord(new TrainingRecord
+        //  {
+        //    Completed = model.Completed,
+        //    Course = new NameIdPair { Id = courseId },
+        //    Member = new NameIdPair { Id = memberId },
+        //    Comments = $"{configuration["siteRoot"]?.TrimEnd('/') ?? "https://exams.kcsara.org"}/certificate/{model.Id}"
+        //  });
+        //}
       }
 
       return View(model);
