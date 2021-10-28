@@ -69,7 +69,6 @@ namespace Kcsara.Exams
 
         var healthChecksBuilder = services.AddHealthChecks();
         services.AddMessagingApi(Configuration, healthChecksBuilder);
-        services.ConfigureApi<IDatabaseApi>("database", Configuration);
 
         services.AddTableStorage(Configuration);
         services.AddSingleton<CertificateStore>();

@@ -63,7 +63,7 @@ namespace Kcsara.Exams.Controllers
     /// <param name="configuration"></param>
     /// <returns></returns>
     [HttpPost("/exams/{quizId}")]
-    public async Task<IActionResult> Finish(string quizId, PresentExamModel formModel, [FromServices] IConfiguration configuration, [FromServices] IMessagingApi messaging, [FromServices] IDatabaseApi database)
+    public async Task<IActionResult> Finish(string quizId, PresentExamModel formModel, [FromServices] IConfiguration configuration, [FromServices] IMessagingApi messaging)
     {
       var quiz = store.Quizzes.FirstOrDefault(f => f.Id.Equals(quizId, StringComparison.OrdinalIgnoreCase) || f.Title.Replace(" ", "-").Equals(quizId, StringComparison.OrdinalIgnoreCase));
       if (quiz == null)
