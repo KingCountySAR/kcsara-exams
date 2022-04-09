@@ -22,7 +22,7 @@
       <div class="form-group col-md-6">
         <label asp-for="@Model.Email"></label>
         <input asp-for="@Model.Email" class="form-control" readonly="@(!string.IsNullOrWhiteSpace(Model.MemberId))" />
-        <small id="emailHelp" class="form-text text-muted">We will email you a certificate of completion.</small>
+        @*<small id="emailHelp" class="form-text text-muted">We will email you a certificate of completion.</small>*@
         <span asp-validation-for="@Model.Email" class="text-danger"></span>
       </div>
     </div>

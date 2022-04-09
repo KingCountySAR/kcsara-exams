@@ -146,11 +146,11 @@ namespace Kcsara.Exams.Controllers
         });
 
         // Send email to user
-        string message = $"Full Name: {model.Name}<br/>Email: {model.Email}<br/><br/>Course: {model.Title}<br/>Results: {model.Score} out of {model.Possible}.<br/><br/>A certificate of completion is attached.<br/><br/><br/>--<br/>KCSARA Training Committee<br/>training@kcsara.org";
-        await messaging.SendEmail(model.Email, "KCSARA Online Exam Results", message, new List<MessageAttachment>
-        {
-          new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
-        });
+        //string message = $"Full Name: {model.Name}<br/>Email: {model.Email}<br/><br/>Course: {model.Title}<br/>Results: {model.Score} out of {model.Possible}.<br/><br/>A certificate of completion is attached.<br/><br/><br/>--<br/>KCSARA Training Committee<br/>training@kcsara.org";
+        //await messaging.SendEmail(model.Email, "KCSARA Online Exam Results", message, new List<MessageAttachment>
+        //{
+        //  new MessageAttachment { Base64 = Convert.ToBase64String(cert.Data), FileName = cert.FileName, MimeType = cert.MimeType }
+        //});
 
         //if (Guid.TryParse(quiz.RecordsId, out Guid courseId) && Guid.TryParse(model.MemberId, out Guid memberId))
         //{
